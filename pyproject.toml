@@ -9,7 +9,28 @@ requires-python = ">=3.10"
 authors = [
     { name = "Mohammed Farhan KC", email = "kcfarhan123@gmail.com" },
 ]
-keywords = ["odoo", "cli", "rich", "typer", "odoo-tools", "developer-tools"]
+keywords = [
+    "odoo",
+    "odoo-bin",
+    "odoo-shell",
+    "odoo-cli",
+    "odoo-tools",
+    "odoo-developer",
+    "erp",
+    "cli",
+    "tui",
+    "rich",
+    "typer",
+    "scaffold",
+    "module-management",
+    "database-management",
+    "backup",
+    "restore",
+    "postgresql",
+    "automation",
+    "developer-tools",
+    "developer-experience",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -74,7 +95,7 @@ include = [
     "pyproject.toml",
 ]
 
-[tool.pytest.ini_options]
+[tool.pytest]
 addopts = ["--strict-markers", "--strict-config"]
 testpaths = ["tests"]
 
@@ -83,7 +104,6 @@ python_version = "3.10"
 files = ["src/odoo_rich_cli"]
 strict = true
 pretty = true
-show_error_codes = true
 
 [[tool.mypy.overrides]]
 module = ["typer.*", "rich.*"]

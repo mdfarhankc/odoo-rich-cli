@@ -13,6 +13,7 @@ The CLI command is **`orc`** (Odoo Rich Cli). Install it once globally and run i
 - **Global flags** — pass `-c` and `-d` at the top level, works for both direct commands and interactive mode
 - **Project-aware** — `orc` only runs inside an Odoo project root (detected by an `odoo-bin` file). It runs `odoo-bin` with the active virtualenv's Python (or `sys.executable` as a fallback)
 - **Reads odoo.conf** — auto-detects database and config from your project directory
+- **Fully typed, tested, and lint-clean** — ships `py.typed`, passes `mypy --strict`, covered by pytest, formatted with ruff
 
 ## Installation
 
@@ -225,7 +226,7 @@ Each manager opens a sub-menu with `[0] Back`. If config was auto-detected, you 
 ## How it works
 
 1. `orc` requires an `odoo-bin` file in the current directory — that's the marker for "this is an Odoo project". If missing, it exits with a clear error.
-2. It runs `./odoo-bin` using your currently active Python interpreter (`sys.executable`), so the call uses the venv you activated.
+2. It runs `./odoo-bin` under the Python from your activated virtualenv (`$VIRTUAL_ENV`), falling back to `sys.executable` if no venv is active. This means `uv tool install orc` / `uvx odoo-rich-cli` still pick up your odoo deps from the venv you activated.
 3. For shell-based commands it builds a Python ORM script and pipes it into `odoo shell -c <conf> -d <db> --no-http` via subprocess.
 4. Each script runs the operation and calls `env.cr.commit()` so changes persist after the shell exits.
 5. Output is parsed via a sentinel marker for reliable result extraction from odoo shell's startup noise.
@@ -268,6 +269,19 @@ orc clear-assets
 orc reset-password
 orc scaffold -m test_module -p /tmp
 orc cron-list
+orc db list
+orc db backup my_db -o /tmp/my_db.zip
+orc run --workers=0
+```
+
+### Run the dev toolchain
+
+```bash
+uv sync --group dev      # install ruff, mypy, pytest
+uv run ruff check
+uv run ruff format --check
+uv run mypy
+uv run pytest
 ```
 
 ## Project structure
@@ -275,10 +289,20 @@ orc cron-list
 ```
 odoo-rich-cli/
 ├── pyproject.toml              # Project metadata, dependencies, entry point (orc)
+├── README.md
+├── release-notes.md            # Changelog
+├── CONTRIBUTING.md
+├── LICENSE
 ├── main.py                     # Thin entry point: python main.py
+├── .github/
+│   ├── dependabot.yml          # Weekly uv + actions updates
+│   └── workflows/
+│       ├── ci.yml              # Lint + tests on Linux/macOS/Windows × Py 3.10–3.13
+│       └── publish.yml         # Tag-driven PyPI publish via trusted publishing
 ├── src/
 │   └── odoo_rich_cli/
 │       ├── __init__.py         # Package version + run() embed helper export
+│       ├── py.typed            # PEP 561 marker — library is fully typed
 │       ├── config.py           # odoo.conf parsing + odoo-bin / project-root detection
 │       ├── shell.py            # Pipes scripts into odoo shell, runs odoo server, parses sentinel output
 │       ├── commands.py         # ORM scripts for all shell-based commands
@@ -286,7 +310,12 @@ odoo-rich-cli/
 │       ├── ui.py               # Shared Rich panels, tables, and status spinner
 │       ├── app.py              # Typer CLI app with all commands
 │       └── menu.py             # Rich interactive menu (managers + sub-menus)
+└── tests/                      # pytest suite — scaffold, config, shell, app helpers, db commands
 ```
+
+## Changelog
+
+See [release-notes.md](release-notes.md) for what changed in each version.
 
 ## Contributing
 
